@@ -13,6 +13,8 @@
 		15C43330196B44EF00166709 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 15C4332E196B44EF00166709 /* Main.storyboard */; };
 		15C43332196B44EF00166709 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 15C43331196B44EF00166709 /* Images.xcassets */; };
 		15C4333E196B44F400166709 /* RunLooperTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 15C4333D196B44F400166709 /* RunLooperTests.m */; };
+		15C43349196B488700166709 /* CQMTwistedRunLoops.m in Sources */ = {isa = PBXBuildFile; fileRef = 15C43348196B488700166709 /* CQMTwistedRunLoops.m */; };
+		15C4334A196B488700166709 /* CQMTwistedRunLoops.m in Sources */ = {isa = PBXBuildFile; fileRef = 15C43348196B488700166709 /* CQMTwistedRunLoops.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -38,6 +40,8 @@
 		15C43337196B44F300166709 /* RunLooperTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RunLooperTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		15C4333C196B44F300166709 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		15C4333D196B44F400166709 /* RunLooperTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = RunLooperTests.m; sourceTree = "<group>"; };
+		15C43347196B488700166709 /* CQMTwistedRunLoop.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CQMTwistedRunLoop.h; sourceTree = "<group>"; };
+		15C43348196B488700166709 /* CQMTwistedRunLoops.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CQMTwistedRunLoops.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -79,6 +83,8 @@
 		15C43323196B44EF00166709 /* RunLooper */ = {
 			isa = PBXGroup;
 			children = (
+				15C43347196B488700166709 /* CQMTwistedRunLoop.h */,
+				15C43348196B488700166709 /* CQMTwistedRunLoops.m */,
 				15C43328196B44EF00166709 /* AppDelegate.h */,
 				15C43329196B44EF00166709 /* AppDelegate.m */,
 				15C4332B196B44EF00166709 /* ViewController.h */,
@@ -217,6 +223,7 @@
 			files = (
 				15C4332D196B44EF00166709 /* ViewController.m in Sources */,
 				15C4332A196B44EF00166709 /* AppDelegate.m in Sources */,
+				15C43349196B488700166709 /* CQMTwistedRunLoops.m in Sources */,
 				15C43327196B44EF00166709 /* main.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -225,6 +232,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				15C4334A196B488700166709 /* CQMTwistedRunLoops.m in Sources */,
 				15C4333E196B44F400166709 /* RunLooperTests.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
