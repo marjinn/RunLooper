@@ -8,6 +8,8 @@
 
 #import <Foundation/Foundation.h>
 
+#pragma mark Custom input source object definition
+
 @interface CQMTwistedRunLoop: NSObject
 {
     

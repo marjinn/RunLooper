@@ -669,8 +669,35 @@
         to register itself with the application delegate on that thread. 
     - When the delegate wants to communicate with the input source, 
         it uses the information in RunLoopContext object to do so.
+    - One of the most important callback routines is 
+        the one used to process custom data when your input source is signaled.
+    - "example" function forwards the request to do the work to "sourceFired"
+        method, which then processes any commands present in the command buffer.
+    - if you remove your input source from its run loop using
+        the "CFRunLoopSourceInvalidate()" function,the ystem calls your 
+        input source's cancellation routine. 
+    - You can use this routine to notify clients that the input source
+        is no longer and that theys should remove any references to it.
+    - "example" This function sends another RunLoopContext object to
+        the application delegate, but this time asks the delegate to 
+        remove references to the run loop source.
+ 
+ TASK 2 . Installing the input source on the Run loop
+ ----------------------------------------------------
+ 1. The init method creates the CFRunLoopSourceRef opaque type 
+        that must actually be attached to the run loop.
+ 2. It passes the RunLoopSource object itself as the contextual information 
+        so that the callback routines have a pointer to the object. 
+ 3. Installation of the input source does not occur until 
+        the worker thread invokes the addToCurrentRunLoop method,
+        at which point the RunLoopSourceScheduleRoutine callback function 
+        is called. 
+ 4. Once the input source is added to the run loop, 
+        the thread can run its run loop to wait on it.
  
 
+ TASK 2 . Coordinating with Clients of the Input Source
+ ------------------------------------------------------
  */
 
 
@@ -681,6 +708,64 @@
 
 
 @implementation RunLoopSource
+
+
+-(instancetype)init
+{
+    /*
+     typedef struct {
+     CFIndex	version;
+     void *	info;
+     const void *(*retain)(const void *info);
+     void	(*release)(const void *info);
+     CFStringRef	(*copyDescription)(const void *info);
+     Boolean	(*equal)(const void *info1, const void *info2);
+     CFHashCode	(*hash)(const void *info);
+     void	(*schedule)(void *info, CFRunLoopRef rl, CFStringRef mode);
+     void	(*cancel)(void *info, CFRunLoopRef rl, CFStringRef mode);
+     void	(*perform)(void *info);
+     } CFRunLoopSourceContext;
+     */
+    CFRunLoopSourceContext context;
+    context.version             = 0;
+    context.info                = (__bridge void *)self;
+    context.retain              = NULL;
+    context.release             = NULL;
+    context.copyDescription     = NULL;
+    context.equal               = NULL;
+    context.hash                = NULL;
+    context.schedule            = &RunLoopSourceScheduleRoutine;
+    context.cancel              = &RunLoopSourceCancelRoutine;
+    context.perform             = &RunLoopSourcePerformRoutine;
+    
+    /*
+     CF_EXPORT CFRunLoopSourceRef CFRunLoopSourceCreate(CFAllocatorRef allocator, CFIndex order, CFRunLoopSourceContext *context);
+     */
+    self->runLoopSource =
+    CFRunLoopSourceCreate(
+                          NULL,
+                          0,
+                          (CFRunLoopSourceContext*)&context);
+    
+    self->commands      = [NSMutableArray new];
+    
+    return self;
+}
+
+
+-(void)addToCurrentRunLoop
+{
+    CFRunLoopRef runLoop = NULL;
+    runLoop = CFRunLoopGetCurrent();
+    
+    /*
+     CF_EXPORT void CFRunLoopAddSource(CFRunLoopRef rl, CFRunLoopSourceRef source, CFStringRef mode);
+     */
+    CFRunLoopAddSource(runLoop, self->runLoopSource, kCFRunLoopDefaultMode);
+    
+    return;
+}
+
 
 void RunLoopSourceScheduleRoutine (void *info, CFRunLoopRef rl, CFStringRef mode)
 {
@@ -708,10 +793,29 @@ void RunLoopSourceScheduleRoutine (void *info, CFRunLoopRef rl, CFStringRef mode
 
 
 
+void RunLoopSourcePerformRoutine (void* info)
+{
+    RunLoopSource* obj = nil;
+    obj = obj = (__bridge RunLoopSource*)info;
+    
+    [obj sourceFired];
+}
 
 
-
-
+void RunLoopSourceCancelRoutine (void *info, CFRunLoopRef rl, CFStringRef mode)
+{
+    RunLoopSource* obj = nil;
+    obj = (__bridge RunLoopSource*)info;
+    
+    AppDelegate* del = nil;
+    del = (AppDelegate*)[[UIApplication sharedApplication] delegate];
+    
+    if([del respondsToSelector:@selector(removeSource:)])
+    {
+        [del performSelectorOnMainThread:@selector(removeSource:)
+                              withObject:theContext waitUntilDone:NO];
+    }
+}
 
 @implementation RunLoopContext
 
