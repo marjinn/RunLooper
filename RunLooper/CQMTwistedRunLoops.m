@@ -698,6 +698,29 @@
 
  TASK 2 . Coordinating with Clients of the Input Source
  ------------------------------------------------------
+ 
+ 1. For your input source to be useful, 
+        you need to manipulate it and signal it from another thread. 
+ 2. The whole point of an input source is to put its associated thread to sleep
+        until there is something to do. 
+ 3. That fact necessitates having other threads in your application
+        know about the input source and have a way to communicate with it.
+ 
+ 4. One way to notify clients about your input source is to send out 
+        registration requests when your input source is first installed 
+        on its run loop.
+ 5. You can register your input source with as many clients as you want, 
+        or you can simply register it with some central agency that
+        then vends your input source to interested clients. 
+ 6. EXAMPLE shows the registration method defined by the application delegate 
+        and invoked when the RunLoopSource object’s scheduler function is called.
+ 7. This method receives the RunLoopContext object provided by the RunLoopSource
+        object and adds it to its list of sources. 
+ 8. This listing also shows the routine used to unregister the input source
+        when it is removed from its run loop.
+ 
+
+ 
  */
 
 
