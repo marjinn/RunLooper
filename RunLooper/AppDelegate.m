@@ -7,9 +7,13 @@
 //
 
 #import "AppDelegate.h"
+#import "CQMTwistedRunLoop.h"
 
 @interface AppDelegate ()
-            
+
+{
+    NSMutableSet* sourcesToPing;
+}
 
 @end
 
@@ -41,6 +45,37 @@
 
 - (void)applicationWillTerminate:(UIApplication *)application {
     // Called when the application is about to terminate. Save data if appropriate. See also applicationDidEnterBackground:.
+}
+
+
+#pragma -
+#pragma Runloop Source
+#pragma -
+-(void)registerSource:(RunLoopContext*)sourceInfo
+{
+    [self->sourcesToPing addObject:(id)sourceInfo];
+    return;
+}
+
+-(void)removeSource:(RunLoopContext*)sourceInfo
+{
+    id objectToRemove = nil;
+    
+    for (RunLoopContext* context in self->sourcesToPing)
+    {
+        if ([context isEqual:(id)sourceInfo])
+        {
+            objectToRemove = (id)context;
+            break;
+        }
+    }
+    
+    if (objectToRemove)
+    {
+        [self->sourcesToPing removeObject:objectToRemove];
+    }
+    
+    return;
 }
 
 @end
