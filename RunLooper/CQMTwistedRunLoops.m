@@ -720,6 +720,35 @@
         when it is removed from its run loop.
  
 
+ TASK 3 . Signaling the Input Source
+ -----------------------------------
+ 1. After it hands off its data to the input source, 
+    a client must signal the source and wake up its run loop.
+ 2. Signaling the source lets the runloop know that the source is ready to be 
+    processed.
+ 3. Also ,because the threda might be asleep when the signal occurs,you
+    shoudl always wake up the runLoop expplicitly.
+ 4. Failing to do that might result in delay in processing the input source
+ 
+ 5. EXAMPLE shows the fireCommandsOnRunLoop method of the RunLoopSource object.
+ 6. Clients invoke this method when they are ready for the source to process the commands they added to the buffer.
+ 
+ 
+ 
+ 24. Configuring Timer Sources
+ ------------------------------
+ 1. Normal case use NSTimer or CFRunLoopTimerRef
+ 2. In Cocoa, you can create and schedule a timer all at once using 
+    either of these class methods:
+    "scheduledTimerWithTimeInterval:target:selector:userInfo:repeats:"
+    "scheduledTimerWithTimeInterval:invocation:repeats:"
+ 3. These methods create the timer and add it to the 
+    current thread’s run loop in the default mode (NSDefaultRunLoopMode).
+ 4. Schedule a timer manually by using 
+    "addTimer:forMode" , method of NSRunLoop.
+ 5. if you create the timer and add it to the run loop manually,
+        you can do so using a mode other than the default mode.
+ 
  
  */
 
@@ -732,6 +761,90 @@
 
 @implementation RunLoopSource
 
+-(void)getTimerSourceNSRunLoop
+{
+    NSRunLoop* myRunLoop = nil;
+    myRunLoop = [NSRunLoop currentRunLoop];
+    
+    NSDate* futureDate = nil;
+    futureDate = [NSDate dateWithTimeIntervalSinceNow:1.0];
+    
+    /* Manulaly adding a timer */
+    NSTimer* myTimer = nil;
+    myTimer =
+    [[NSTimer alloc] initWithFireDate:futureDate
+                             interval:0.1
+                               target:self
+                             selector:@selector(myDoFireTimer1:)
+                             userInfo:nil
+                              repeats:YES
+     ];
+    
+    [myRunLoop addTimer:myTimer forMode:NSDefaultRunLoopMode];
+    
+    //Create a  schedule a timer automatically
+    NSMethodSignature* methodSig = nil;
+    methodSig =  [NSObject methodSignatureForSelector:@selector(myDoFireTimer1:)];
+    
+    NSInvocation* invocation = nil;
+    invocation = [NSInvocation invocationWithMethodSignature:methodSig];
+    
+    [NSTimer scheduledTimerWithTimeInterval:0.2
+                                 invocation:invocation
+                                    repeats:YES];
+    
+    [NSTimer scheduledTimerWithTimeInterval:0.2
+                                     target:self
+                                   selector:@selector(myDoFireTimer2:)
+                                   userInfo:@{@0: NSStringFromSelector(_cmd)}
+                                    repeats:YES];
+    
+    return;
+}
+                                                                        
+                                                                        
+-(void)getTimerSourceCFRunLoop
+{
+    CFRunLoopRef runLoop = NULL;
+    runLoop = CFRunLoopGetCurrent();
+    
+    /*
+     typedef struct {
+     CFIndex	version;
+     void *	info;
+     const void *(*retain)(const void *info);
+     void	(*release)(const void *info);
+     CFStringRef	(*copyDescription)(const void *info);
+     } CFRunLoopTimerContext;
+     */
+    CFRunLoopTimerContext context;
+    context.version         = 0;
+    context.info            = NULL;
+    context.retain          = NULL:
+    context.release         = NULL;
+    context.copyDescription = NULL:
+    
+    return;
+}
+
+- (void)myDoFireTimer1:(NSTimer *)timer
+{
+    NSLog(@"%s",__PRETTY_FUNCTION__);
+    return;
+}
+
+- (void)myDoFireTimer2:(NSTimer *)timer
+{
+    NSLog(@"%s",__PRETTY_FUNCTION__);
+    return;
+}
+
+-(void)fireAllCommandsOnRunLoop:(CFRunLoopRef)runLoop
+{
+    CFRunLoopSourceSignal(self->runLoopSource);
+    
+    CFRunLoopWakeUp(runLoop);
+}
 
 -(instancetype)init
 {
