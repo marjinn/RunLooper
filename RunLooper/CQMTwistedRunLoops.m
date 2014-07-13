@@ -9,6 +9,7 @@
 
 #import "CQMTwistedRunLoop.h"
 #import "AppDelegate.h"
+#import <objc/runtime.h>
 
 @import CoreFoundation;
 
@@ -731,7 +732,8 @@
  4. Failing to do that might result in delay in processing the input source
  
  5. EXAMPLE shows the fireCommandsOnRunLoop method of the RunLoopSource object.
- 6. Clients invoke this method when they are ready for the source to process the commands they added to the buffer.
+ 6. Clients invoke this method when they are ready for the source to process 
+    the commands they added to the buffer.
  
  
  
@@ -750,6 +752,50 @@
         you can do so using a mode other than the default mode.
  
  
+ 
+ 
+ 25. Configuring Port based Input Sources
+ ----------------------------------------
+ 1. Configuring an NSMachPortObject
+ ------------------------------------
+ To establish a local connection With an NSMach Port Object
+    a. Create an NSMachPortObject
+    b. ADD IT To primary thread's runLoop
+    c. When launching the secobdary threda pass the same object to the
+        secondary thread's entry point
+    4. The secondary threda can the use this object to send messages to the
+        primary thread.
+ 
+ 2. Implementing the main thread Code
+---------------------------------------
+    a. Create  a NSMachPortObject
+    b. Make the class NSMachPortDelegate.
+    c. Get the current RunLoop and add the NSMachPortObject to it with
+        mode = NSDefaultRunLoopMode.
+    d. Launch a new Thread
+        -- this thread's entry point function takes in a NSMachPortObject
+        -- we supply mainThreads NSMachPortObject
+        -- Target will be set as new class which will implement
+            secondary thread routines
+    e. In order to set up a two-way communications channel between your threads,
+        -- you might want to have the worker thread send its own local port 
+            to your main thread in a check-in message.
+        -- Receiving the check-in message lets your main thread know
+            that all went well in launching the second thread 
+            and also gives you a way to send further messages to that thread.
+ 
+        -- Example shows the handlePortMessage: method for the primary thread.
+                a. This method is called when data arrives on the thread's own 
+                    local port. 
+                b. When a check-in message arrives, 
+                     1. the method retrieves the port
+                            for the secondary thread directly
+                            from the port message
+                     2. and saves it for later use.
+ 
+ 
+ 
+ 
  */
 
 
@@ -758,8 +804,295 @@
 #pragma mark -
 
 
+/* Secondary thread's class for use of MSMACHPORT EXAMPLE */
+
+typedef NS_OPTIONS(NSUInteger, IvarAccessType)
+{
+    IvarAccessTypeGet = 1,
+    IvarAccessTypeSet = 2,
+    IvarAccessTypeNone = 0,/* can be used to set an iVar to "nil"  */
+    
+};
+
+typedef NS_OPTIONS(NSUInteger, IvarType)
+{
+    IvarTypeClass = 1,
+    IvarTypeInstance = 2,
+    IvarTypeNone = 0,
+    
+};
+
+@interface MyWorkerClass : NSObject
+{
+    @public
+    NSThread* threadFromHere;
+    NSRunLoop* thisThreadsRunLoop;
+}
+
+//@property(atomic,retain)NSThread* threadFromHere;
+//@property(atomic,retain)NSRunLoop* thisThreadsRunLoop;
+
+@end
+
+@implementation MyWorkerClass
+
+#pragma mark -
+#pragma mark PORT BASED SOURCES EXAMPLE
+#pragma mark -
+
+
+
+/* Class method to launch a new thread  */
++(void)Launch_Thread_With_Port:(NSPort*)port
+{
+    NSLog(@"%@",NSStringFromSelector(_cmd));
+    NSLog(@"%@",port);
+    
+    NSThread* threadHere = nil;
+    threadHere =
+    [[NSThread alloc]initWithTarget:self
+                           selector:@selector(threadMain)
+                             object:nil];
+    
+    NSRunLoop* threadRunLoop = nil;
+    id tmpLoop = nil;
+    tmpLoop = ManipulateIVarsFromClassMethods(
+                          IvarAccessTypeGet,
+                          IvarTypeInstance,
+                          (const char *)"thisThreadsRunLoop",
+                          NSClassFromString(@"MyWorkerClass"),
+                          nil,
+                          NULL);
+    
+    if (tmpLoop && [tmpLoop isKindOfClass:[NSRunLoop class]])
+    {
+        threadRunLoop = (NSRunLoop*)tmpLoop;
+        [threadRunLoop addPort:port forMode:NSDefaultRunLoopMode];
+    }
+    
+    
+    BOOL status = NO;
+    ManipulateIVarsFromClassMethods(IvarAccessTypeSet,
+                                    IvarTypeInstance,
+                                    (const char *)"threadFromHere",
+                                    NSClassFromString(@"MyWorkerClass"),
+                                    threadHere,
+                                    (BOOL *)&status);
+    
+    return;
+}
+
+#pragma mark C Functions to access Instance variables from Class Methods
+/* return value Could be BOOL YES for seccess in setting or id if succeded in getting 
+    BOOL NO for all other cases
+ */
+id ManipulateIVarsFromClassMethods (IvarAccessType accessType,IvarType iVarType,const char* iVarName,Class class,id value,BOOL* status)
+{
+    id returnVal = nil;
+    BOOL status_nop = NO;
+
+    id obj = nil;
+    //if (self)/* self object of the class file this function will be added to */
+    {
+        //obj = self;
+        
+        const char* className = NULL;
+        className = class_getName(class);
+        
+        obj = objc_getClass(className);
+    }
+    //else
+    {
+        /* self "nil"*/
+        
+        if (status)
+        {
+            *status = (BOOL*)&status_nop;
+        }
+        
+        //return returnVal;
+    }
+   
+    if (iVarName && obj && class)
+    {
+        Ivar instanceVariable;
+        
+        switch (iVarType)/* iVar Type Class or Instance*/
+        {
+            case IvarTypeClass:
+                instanceVariable = class_getClassVariable(class, iVarName);
+                break;
+            
+            case IvarTypeInstance:
+                instanceVariable = class_getInstanceVariable(class, iVarName);
+                break;
+                
+            case IvarTypeNone:
+            default:
+            {
+                instanceVariable = class_getInstanceVariable(class, iVarName);
+            }
+                break;
+        }
+        
+        switch (accessType)/* access type Get or Set */
+        {
+            case IvarAccessTypeGet:
+            {
+                if (instanceVariable)
+                {
+                    returnVal = object_getIvar(obj, instanceVariable);
+                    
+                    status_nop = YES;
+                    
+                }//instanceVariable
+                else
+                {
+                    /* instanceVariable "nil" for IvarAccessTypeGet*/
+                     status_nop = NO;
+                     
+                }
+            }
+                break;
+                
+            case IvarAccessTypeSet:
+            {
+                if (instanceVariable)
+                {
+                    if (value)
+                    {
+                         object_setIvar(obj, instanceVariable, value);
+                    }
+                    else
+                    {
+                         object_setIvar(obj, instanceVariable, nil);
+                    }
+                    
+                     status_nop = YES;
+                     
+                    
+                }//instanceVariable && value
+                else
+                {
+                    /* instanceVariable "nil" for IvarAccessTypeSet*/
+                     status_nop = NO;
+                     
+                }
+            }
+                break;
+                
+            case IvarAccessTypeNone:
+            default:
+            {
+                if (instanceVariable)
+                {
+                    object_setIvar(obj, instanceVariable, nil);
+                    
+                     status_nop = YES;
+                     
+                
+                }//instanceVariable
+                else
+                {
+                    /* instanceVariable "nil" for IvarAccessTypeNone */
+                     status_nop = NO;
+                     
+                }
+    
+            }
+                break;
+        
+        }//switch (accessType)
+    
+    }//iVarName && obj && class
+    else
+    {
+         status_nop = NO;
+         
+    }
+
+    if (status)
+    {
+        *status = (BOOL*)&status_nop;
+    }
+    return returnVal;
+    
+}//__ThreadFromhere
+
+//void threadFuncToGetAccessToInstanceVariables(NSPort* port,NSThread* thread)
+//{
+//    self->threadFromHere
+//}
+
+-(void)threadMain
+{
+    @autoreleasepool
+    {
+        self->thisThreadsRunLoop = [NSRunLoop currentRunLoop];
+        
+        NSLog(@"%@",NSStringFromSelector(_cmd));
+    }
+    
+    return;
+}
+
+@end
+
+
+@interface RunLoopSource() <NSMachPortDelegate>
+{
+    
+}
+@end
 
 @implementation RunLoopSource
+#pragma mark -
+#pragma mark NSMachPortSource
+#pragma mark -
+
+
+-(void)launchThread_NSLRunLoopVersion
+{
+    //Create a MachPort Object
+    NSMachPort* myPort = nil;
+    myPort = (NSMachPort*)[NSMachPort port];
+    
+    if (myPort)
+    {
+        //set this class as NSMachPort Delegate
+        [myPort setDelegate:(id<NSMachPortDelegate>)self];
+        
+        //install the port as an input source on the current runloop
+        [[NSRunLoop currentRunLoop] addPort:(NSPort *)myPort
+                                    forMode:NSDefaultRunLoopMode];
+        
+        //Detach anew thread >let the worker release the port
+        if(NSClassFromString(@"MyWorkerClass"))
+        {
+            if ([[MyWorkerClass class] instancesRespondToSelector:@selector(LaunchThreadWithPort:)])
+                 {
+                     
+                     [NSThread detachNewThreadSelector:
+                      @selector(LaunchThreadWithPort:)
+                                              toTarget:(id)[MyWorkerClass class]
+                                            withObject:(id)myPort
+                      ];
+                 }
+        }
+        
+    }
+    
+    return;
+}
+
+                 
+                 
+                 
+
+
+#pragma mark -
+#pragma mark Timer Sources
+#pragma mark -
 
 -(void)getTimerSourceNSRunLoop
 {
@@ -820,12 +1153,47 @@
     CFRunLoopTimerContext context;
     context.version         = 0;
     context.info            = NULL;
-    context.retain          = NULL:
+    context.retain          = NULL;
     context.release         = NULL;
-    context.copyDescription = NULL:
+    context.copyDescription = NULL;
+    
+    /*
+     
+     CF_EXPORT CFRunLoopTimerRef CFRunLoopTimerCreate(CFAllocatorRef allocator, CFAbsoluteTime fireDate, CFTimeInterval interval, CFOptionFlags flags, CFIndex order, CFRunLoopTimerCallBack callout, CFRunLoopTimerContext *context);
+     */
+    CFRunLoopTimerRef timer = NULL;
+    timer =
+    CFRunLoopTimerCreate(
+                         (CFAllocatorRef)kCFAllocatorDefault ,
+                         0.1,
+                         0.3,
+                         0,
+                         0,
+                         /*
+                          typedef void (*CFRunLoopTimerCallBack)
+                          (CFRunLoopTimerRef timer, void *info);
+                          */
+                         (CFRunLoopTimerCallBack)&CFRunLoopTimerCallBackCallout,
+                         (CFRunLoopTimerContext*)&context);
+    
+    if (runLoop && timer)
+    {
+        CFRunLoopAddTimer(runLoop, timer, kCFRunLoopCommonModes);
+    }
+    
     
     return;
 }
+
+
+void CFRunLoopTimerCallBackCallout(CFRunLoopTimerRef timer, void *info)
+{
+    printf("\n%p\n",timer);
+    printf("\n%p\n",info);
+    printf("\n%s\n",__PRETTY_FUNCTION__);
+    return;
+}
+
 
 - (void)myDoFireTimer1:(NSTimer *)timer
 {
@@ -846,6 +1214,10 @@
     CFRunLoopWakeUp(runLoop);
 }
 
+
+#pragma mark -
+#pragma mark Custom input Sources
+#pragma mark -
 -(instancetype)init
 {
     /*
@@ -932,7 +1304,7 @@ void RunLoopSourceScheduleRoutine (void *info, CFRunLoopRef rl, CFStringRef mode
 void RunLoopSourcePerformRoutine (void* info)
 {
     RunLoopSource* obj = nil;
-    obj = obj = (__bridge RunLoopSource*)info;
+    obj = (__bridge RunLoopSource*)info;
     
     [obj sourceFired];
 }
@@ -948,8 +1320,8 @@ void RunLoopSourceCancelRoutine (void *info, CFRunLoopRef rl, CFStringRef mode)
     
     if([del respondsToSelector:@selector(removeSource:)])
     {
-        [del performSelectorOnMainThread:@selector(removeSource:)
-                              withObject:theContext waitUntilDone:NO];
+        /*[del performSelectorOnMainThread:@selector(removeSource:)
+                              withObject:theContext waitUntilDone:NO];*/
     }
 }
 

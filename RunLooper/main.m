@@ -8,9 +8,40 @@
 
 #import <UIKit/UIKit.h>
 #import "AppDelegate.h"
+#import <objc/runtime.h>
 
-int main(int argc, char * argv[]) {
-    @autoreleasepool {
+@interface TrialAndErrorClass : NSObject
+{
+    
+}
++(void)thisIsATestMethod;
+
+@end
+
+@implementation TrialAndErrorClass
+
++(void)thisIsATestMethod
+{
+    NSLog(@"%@",NSStringFromSelector(_cmd));
+}
+
+@end
+
+int main(int argc, char * argv[])
+{
+    
+    /*
+     Check if a class responds to a Class method
+    */
+    BOOL doesRespond = NO;
+    doesRespond =
+    [[TrialAndErrorClass class] instancesRespondToSelector:@selector(thisIsATestMethod)];
+    
+    NSLog(@"%@",doesRespond ? @"YES" : @"NO"
+          );
+    
+    @autoreleasepool
+    {
         return UIApplicationMain(argc, argv, nil, NSStringFromClass([AppDelegate class]));
     }
 }

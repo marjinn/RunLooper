@@ -51,8 +51,9 @@ void RunLoopSourceCancelRoutine (void *info, CFRunLoopRef rl, CFStringRef mode);
 @interface RunLoopContext : NSObject
 
 {
-    CFRunLoopRef runLoop;
-    RunLoopSource* source;
+    
+    //CFRunLoopRef runLoop;
+    //RunLoopSource* source;
 }
 
 @property(readonly)CFRunLoopRef runLoop;
