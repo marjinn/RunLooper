@@ -13,8 +13,12 @@
 @interface TrialAndErrorClass : NSObject
 {
     
+    //NSString* trial;
 }
+
+@property NSString* trial;
 +(void)thisIsATestMethod;
+-(void)thisIsAnotherTestMethod;
 
 @end
 
@@ -25,13 +29,21 @@
     NSLog(@"%@",NSStringFromSelector(_cmd));
 }
 
+-(void)thisIsAnotherTestMethod
+{
+    NSLog(@"%@",NSStringFromSelector(_cmd));
+}
+
 @end
 
 int main(int argc, char * argv[])
 {
+    TrialAndErrorClass* trial = nil;
+    trial = [TrialAndErrorClass new];
     
+    [trial setTrial:@"noo"];
     /*
-     Check if a class responds to a Class method
+     Check if a class responds to an instanceMethod method
     */
     BOOL doesRespond = NO;
     doesRespond =
@@ -40,6 +52,16 @@ int main(int argc, char * argv[])
     NSLog(@"%@",doesRespond ? @"YES" : @"NO"
           );
     
+    /*
+     Check if a class responds to a class method
+     */
+    BOOL doesRespondTo = NO;
+    doesRespondTo =
+    [[TrialAndErrorClass class] respondsToSelector:@selector(thisIsATestMethod)];
+    
+    NSLog(@"%@",doesRespond ? @"YES" : @"NO"
+          );
+
     @autoreleasepool
     {
         return UIApplicationMain(argc, argv, nil, NSStringFromClass([AppDelegate class]));

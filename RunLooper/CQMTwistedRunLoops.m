@@ -825,12 +825,12 @@ typedef NS_OPTIONS(NSUInteger, IvarType)
 @interface MyWorkerClass : NSObject
 {
     @public
-    NSThread* threadFromHere;
-    NSRunLoop* thisThreadsRunLoop;
+    //NSThread* threadFromHere;
+    //NSRunLoop* thisThreadsRunLoop;
 }
 
-//@property(atomic,retain)NSThread* threadFromHere;
-//@property(atomic,retain)NSRunLoop* thisThreadsRunLoop;
+@property(atomic,retain)NSThread* threadFromHere;
+@property(atomic,retain)NSRunLoop* thisThreadsRunLoop;
 
 @end
 
@@ -840,7 +840,22 @@ typedef NS_OPTIONS(NSUInteger, IvarType)
 #pragma mark PORT BASED SOURCES EXAMPLE
 #pragma mark -
 
+static id self_for_class_methods = nil;
 
+- (instancetype)init
+{
+    self = [super init];
+    if (self)
+    {
+        self_for_class_methods = self;
+    }
+    return self;
+}
+
+-(void)dealloc
+{
+    self_for_class_methods = nil;
+}
 
 /* Class method to launch a new thread  */
 +(void)Launch_Thread_With_Port:(NSPort*)port
@@ -888,6 +903,7 @@ typedef NS_OPTIONS(NSUInteger, IvarType)
  */
 id ManipulateIVarsFromClassMethods (IvarAccessType accessType,IvarType iVarType,const char* iVarName,Class class,id value,BOOL* status)
 {
+    
     id returnVal = nil;
     BOOL status_nop = NO;
 
@@ -1028,7 +1044,7 @@ id ManipulateIVarsFromClassMethods (IvarAccessType accessType,IvarType iVarType,
 {
     @autoreleasepool
     {
-        self->thisThreadsRunLoop = [NSRunLoop currentRunLoop];
+        self->_thisThreadsRunLoop = [NSRunLoop currentRunLoop];
         
         NSLog(@"%@",NSStringFromSelector(_cmd));
     }
@@ -1069,7 +1085,7 @@ id ManipulateIVarsFromClassMethods (IvarAccessType accessType,IvarType iVarType,
         //Detach anew thread >let the worker release the port
         if(NSClassFromString(@"MyWorkerClass"))
         {
-            if ([[MyWorkerClass class] instancesRespondToSelector:@selector(LaunchThreadWithPort:)])
+            if ([[MyWorkerClass class] respondsToSelector:@selector(LaunchThreadWithPort:)])
                  {
                      
                      [NSThread detachNewThreadSelector:
