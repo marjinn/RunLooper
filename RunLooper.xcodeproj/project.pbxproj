@@ -414,6 +414,7 @@
 				15C43343196B44F400166709 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		15C43344196B44F400166709 /* Build configuration list for PBXNativeTarget "RunLooperTests" */ = {
 			isa = XCConfigurationList;
@@ -422,6 +423,7 @@
 				15C43346196B44F400166709 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};

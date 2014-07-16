@@ -903,21 +903,22 @@ static id self_for_class_methods = nil;
  */
 id ManipulateIVarsFromClassMethods (IvarAccessType accessType,IvarType iVarType,const char* iVarName,Class class,id value,BOOL* status)
 {
-    
     id returnVal = nil;
     BOOL status_nop = NO;
 
     id obj = nil;
-    //if (self)/* self object of the class file this function will be added to */
+    if (self_for_class_methods)/* self object of the class file this function will be added to */
     {
-        //obj = self;
+        obj = self_for_class_methods;
         
+        /*
         const char* className = NULL;
         className = class_getName(class);
         
         obj = objc_getClass(className);
+         */
     }
-    //else
+    else
     {
         /* self "nil"*/
         

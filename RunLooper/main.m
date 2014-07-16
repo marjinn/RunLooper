@@ -24,14 +24,31 @@
 
 @implementation TrialAndErrorClass
 
+- (instancetype)init
+{
+    self = [super init];
+    if (self)
+    {
+        [[self class] getSelf:(id)self];
+    }
+    return self;
+}
+
++(id)getSelf:(id)thisSelf
+{
+    return thisSelf;
+}
+
 +(void)thisIsATestMethod
 {
     NSLog(@"%@",NSStringFromSelector(_cmd));
+    [[[self alloc]init] setTrial:@"Google"];
 }
 
 -(void)thisIsAnotherTestMethod
 {
     NSLog(@"%@",NSStringFromSelector(_cmd));
+    
 }
 
 @end
@@ -42,12 +59,32 @@ int main(int argc, char * argv[])
     trial = [TrialAndErrorClass new];
     
     [trial setTrial:@"noo"];
+    
+    [[trial class]thisIsATestMethod];
+    
+    [trial thisIsAnotherTestMethod];
     /*
      Check if a class responds to an instanceMethod method
     */
     BOOL doesRespond = NO;
     doesRespond =
     [[TrialAndErrorClass class] instancesRespondToSelector:@selector(thisIsATestMethod)];
+    
+    NSMethodSignature* methodZ= nil;
+    methodZ =
+    [[TrialAndErrorClass class] instanceMethodSignatureForSelector:@selector(setTrial:)];
+    
+    NSInvocation* inocZ = nil;
+    inocZ =
+    [NSInvocation invocationWithMethodSignature:methodZ];
+    
+    NSString* string = @"google";
+    [inocZ setArgument:(__bridge void *)(string) atIndex:(NSInteger)2];
+    
+    //[inocZ invokeWithTarget:[TrialAndErrorClass class]];
+    [inocZ invoke];
+    
+    
     
     NSLog(@"%@",doesRespond ? @"YES" : @"NO"
           );
