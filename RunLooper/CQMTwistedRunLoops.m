@@ -793,6 +793,29 @@
                             from the port message
                      2. and saves it for later use.
  
+ 3.Implementing Secondary Threads Code
+ --------------------------------------
+ For secondary worker Threads
+    a. configure the thread and 
+    b. use the specified port to communicate information back 
+            to the primary thread.
+ c. Example -  
+        - creates an autorelease pool for the thread,
+        - the method creates a worker object to drive the thread execution.
+        - The worker object’s sendCheckinMessage: method 
+        - creates a local port for the worker thread and 
+        - sends a check-in message back to the main thread.
+ 
+ d. When using NSMachPort, local and remote threads can use the same port object 
+    for one-way communication between the threads. 
+ e. In other words, the local port object created by one thread becomes the remote port object for the other thread.
+ 
+ EXAMPLE - sets up its own local port for future communication 
+            and then sends a check-in message back to the main thread.
+ f. The method uses the port object received in the LaunchThreadWithPort: method
+        as the target of the message.
+ 
+
  
  
  
