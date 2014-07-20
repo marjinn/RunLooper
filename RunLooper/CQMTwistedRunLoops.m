@@ -818,6 +818,7 @@
 
  
  4.Configuring a NSMessagePort Object
+ -------------------------------------
  //-- Not avaialable in iOS7.0
  //-- NEEd to implement this using GCD shortly
  //-- Test out and see what gives more flexibility
@@ -838,6 +839,27 @@
                  [[NSMessagePortNameServer sharedInstance] 
                     registerPort:localPort 
                     name:localPortName]
+ 
+ 5.Configuring a Port-Based Input source in Core Foundation
+ -----------------------------------------------------------
+ 1. Setting up a two-way communication channel between application's mainThread
+        and a worker thread
+    - Main Thread
+        - Cretae a CFMessagePortRef
+        - Worker thread needs name of the this Port
+        - name is delivered to worker thread via its entry point function
+        - launch a new thread using pthread_create
+    - Worker Thread
+        - extracts the mainThreads portName
+        - uses that to create a connection Back to main thread
+        - create a local port for itself
+        - Add that port to CurrenThreads Runloop
+        - Create check-in meeasge with this thraeds local portName,
+        - send the checkiNmeesage using CFMessagePortSendRequest
+    - Main Thread
+        - Check-In message Response Handler
+        - Extracts worker thraeds port name (createa remote port)
+        - Retain It for future Use
 */
 #pragma mark -
 #pragma mark Custom input source object definition
@@ -938,7 +960,7 @@ static id self_for_class_methods = nil;
 }
 
 #pragma mark C Functions to access Instance variables from Class Methods
-/* return value Could be BOOL YES for seccess in setting or id if succeded in getting 
+/* return value Could be BOOL YES for success in setting or id if succeded in getting 
     BOOL NO for all other cases
  */
 id ManipulateIVarsFromClassMethods (IvarAccessType accessType,IvarType iVarType,const char* iVarName,Class class,id value,BOOL* status)
