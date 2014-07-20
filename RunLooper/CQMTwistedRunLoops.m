@@ -817,11 +817,28 @@
  
 
  
+ 4.Configuring a NSMessagePort Object
+ //-- Not avaialable in iOS7.0
+ //-- NEEd to implement this using GCD shortly
+ //-- Test out and see what gives more flexibility
  
- 
- */
-
-
+ 1. Remote Message ports are acquired by name
+ 2. In Cocoa
+        - register your local port with a specific name
+        - pass that name to remote thread 
+        - so that it can obtain an appropriate port obect for communication
+        - Example
+            - Create local port
+                NSport* locaPort = [[NSMessagePort alloc]init];
+            - Configure the object and add it to current run loop
+                [localPort setDelegate:self] <NSPortDelegate>
+            - Register  aport using a specific name. Name must be unique
+                NSString* localPortName = [NSString stringWithFormat:@"MyPortName"]
+            - Resgister port to NSMessagePortNameServer
+                 [[NSMessagePortNameServer sharedInstance] 
+                    registerPort:localPort 
+                    name:localPortName]
+*/
 #pragma mark -
 #pragma mark Custom input source object definition
 #pragma mark -
